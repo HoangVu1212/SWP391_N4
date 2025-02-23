@@ -4,9 +4,8 @@
  */
 package controller.Booking;
 
+import com.google.gson.Gson;
 import dal.AppointmentDAO;
-import dal.AppointmentServiceDAO;
-import dal.PersonDAO;
 import dal.ServiceDAO;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -14,114 +13,174 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import model.Account;
-import model.Appointment;
-import model.Person;
 import model.Service;
+import model.TimeSlot;
 
 /**
  *
  * @author ADMIN
  */
-public class BookingServlet extends HttpServlet {
+public class GetAvailableTimes extends HttpServlet {
 
+    /**
+     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
+     * methods.
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         try (PrintWriter out = response.getWriter()) {
+            /* TODO output your page here. You may use following sample code. */
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
-            out.println("<title>Servlet BookingServlet</title>");
+            out.println("<title>Servlet getAvailableTimes</title>");
             out.println("</head>");
             out.println("<body>");
-            out.println("<h1>Servlet BookingServlet at " + request.getContextPath() + "</h1>");
+            out.println("<h1>Servlet getAvailableTimes at " + request.getContextPath() + "</h1>");
             out.println("</body>");
             out.println("</html>");
         }
     }
 
+    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
+    /**
+     * Handles the HTTP <code>GET</code> method.
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
+            List<String> availableTimes = null;
+            int staffId = Integer.parseInt(request.getParameter("staffId"));
+            LocalDate date = LocalDate.parse(request.getParameter("date"));
+            LocalDate today = LocalDate.now();
+            // Lấy danh sách serviceID từ tham số yêu cầu
+            String[] serviceIds = request.getParameter("service").split(",");
+
+            AppointmentDAO appointmentDAO = new AppointmentDAO();
             ServiceDAO serviceDAO = new ServiceDAO();
-            PersonDAO personDAO = new PersonDAO();
-            List<Service> serviceList = serviceDAO.selectAllServices();
-            List<Person> staffList = personDAO.getPersonByRole("Staff");
-            request.setAttribute("staffList", staffList);
-            request.setAttribute("serviceList", serviceList);
-            request.setAttribute("today", LocalDate.now());
-            request.getRequestDispatcher("booking.jsp").forward(request, response);
+
+            // Tính tổng thời gian cho tất cả các dịch vụ được chọn
+            int totalDuration = 0;
+            for (String serviceIdStr : serviceIds) {
+                int serviceID = Integer.parseInt(serviceIdStr);
+                Service service = serviceDAO.selectService(serviceID);
+                totalDuration += service.getDuration(); // Cộng dồn thời gian của mỗi dịch vụ
+            }
+
+            // Lấy các khung giờ đã được đặt trước đó
+            List<TimeSlot> busyTimes = appointmentDAO.getBusyTimes(staffId, date);
+
+            // Định nghĩa giờ mở cửa và đóng cửa
+            LocalTime openingTime = LocalTime.of(9, 0);
+            LocalTime closingTime = LocalTime.of(18, 0);
+
+            // Tính toán các khung giờ trống dựa trên tổng thời gian dịch vụ
+            if (date.isEqual(today)) {
+                openingTime = openingTime();
+                availableTimes = calculateAvailableSlots(totalDuration, openingTime, closingTime, busyTimes);
+            } else if(date.isAfter(today)) {
+                availableTimes = calculateAvailableSlots(totalDuration, openingTime, closingTime, busyTimes);
+            }
+
+            // Gửi các khung giờ trống dưới dạng JSON
+            response.setContentType("application/json");
+            PrintWriter out = response.getWriter();
+            out.print(new Gson().toJson(availableTimes));
+            out.flush();
+
         } catch (SQLException ex) {
-            Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(GetAvailableTimes.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
+    /**
+     * Handles the HTTP <code>POST</code> method.
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        try {
-            AppointmentDAO appointmentDAO = new AppointmentDAO();
-            ServiceDAO serviceDAO = new ServiceDAO();
-            HttpSession session = request.getSession(false);
-            if (session == null || session.getAttribute("account") == null) {
-                response.sendRedirect("login");
-                return;
-            }
-
-            Account account = (Account) session.getAttribute("account");
-            String[] serviceIds = request.getParameter("selectedServices").split(",");
-            int totalDuration = totalDuration(serviceIds);
-            LocalDate date = LocalDate.parse(request.getParameter("appointmentDate"));
-            LocalTime time = LocalTime.parse(request.getParameter("selectedTime"));
-            LocalDateTime start = LocalDateTime.of(date, time);
-            String note = request.getParameter("notes");
-            Appointment appointment = new Appointment();
-            appointment.setStart(start);
-            appointment.setEnd(start.plusMinutes(totalDuration));
-            appointment.setCreatedDate(LocalDateTime.now());
-            appointment.setStatus("Scheduled");
-            appointment.setNote(note);
-            appointment.setCustomer(account.getPersonInfo());
-            if (appointmentDAO.addAppointment(appointment)) {
-                for (String id : serviceIds) {
-                    int serviceID = Integer.parseInt(id);
-                    Service service = serviceDAO.selectService(serviceID);
-                    int staffId = Integer.parseInt(request.getParameter("staff"));
-                    AppointmentServiceDAO serviceList = new AppointmentServiceDAO();
-                    serviceList.addAppointmentService(appointmentDAO.getMaxAppointmentID(), service.getId(), staffId);
-                }
-            }
-            request.setAttribute("success", "Booking successfully!");
-            doGet(request, response);
-        } catch (SQLException ex) {
-            Logger.getLogger(BookingServlet.class.getName()).log(Level.SEVERE, null, ex);
-            response.sendRedirect("error");
-        }
+        processRequest(request, response);
     }
 
+    /**
+     * Returns a short description of the servlet.
+     *
+     * @return a String containing servlet description
+     */
     @Override
     public String getServletInfo() {
         return "Short description";
+    }// </editor-fold>
+
+    private List<String> calculateAvailableSlots(int serviceDuration, LocalTime opening, LocalTime closing, List<TimeSlot> busyTimes) throws SQLException {
+        List<String> availableSlots = new ArrayList<>();
+        LocalTime time = opening;
+
+        // Generate slots in intervals based on service duration, avoiding busy times
+        while (time.isBefore(closing.minusMinutes(serviceDuration)) || time.equals(closing.minusMinutes(serviceDuration))) {
+            boolean isFree = true;
+            for (TimeSlot busy : busyTimes) {
+                // Check if current time slot conflicts with any busy time slot
+                if (!time.isBefore(busy.getStart()) && time.isBefore(busy.getEnd())) {
+                    isFree = false;
+                    break;
+                }
+            }
+            if (isFree) {
+                availableSlots.add(time.toString());  // Add start time of the available slot
+            }
+            time = time.plusMinutes(30);  // Move to the next 15-minute interval
+        }
+
+        return availableSlots;
     }
 
-    private int totalDuration(String[] serviceIds) throws SQLException {
-        ServiceDAO serviceDAO = new ServiceDAO();
-        int totalDuration = 0;
-        for (String serviceIdStr : serviceIds) {
-            int serviceID = Integer.parseInt(serviceIdStr);
-            Service service = serviceDAO.selectService(serviceID);
-            totalDuration += service.getDuration();
+    private LocalTime openingTime() {
+        LocalTime openingTime = LocalTime.of(10, 0);
+        LocalTime closingTime = LocalTime.of(18, 0);
+        LocalTime nowTime = LocalTime.of(LocalTime.now().getHour(), LocalTime.now().getMinute());
+        List<LocalTime> timeList = timeList(openingTime, closingTime);
+        for (LocalTime localTime : timeList) {
+            if (nowTime.equals(localTime) || nowTime.isBefore(localTime)) {
+                openingTime = localTime;
+                return openingTime;
+            }
         }
-        return totalDuration;
+        return openingTime;
     }
+
+    private List<LocalTime> timeList(LocalTime opening, LocalTime closing) {
+        List<LocalTime> timeList = new ArrayList<>();
+        LocalTime time = opening;
+        while (time.isBefore(closing) || time.equals(closing)) {
+            timeList.add(time);
+            time = time.plusMinutes(30);
+        }
+        return timeList;
+    }
+
 }
