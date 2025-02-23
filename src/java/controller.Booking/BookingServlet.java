@@ -46,7 +46,6 @@ public class BookingServlet extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         try (PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
@@ -59,7 +58,6 @@ public class BookingServlet extends HttpServlet {
         }
     }
 
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
     /**
      * Handles the HTTP <code>GET</code> method.
      *
@@ -101,13 +99,12 @@ public class BookingServlet extends HttpServlet {
             ServiceDAO serviceDAO = new ServiceDAO();
             HttpSession session = request.getSession(false);
             if (session == null || session.getAttribute("account") == null) {
-                response.sendRedirect("login"); // Redirect to a custom error page if session is invalid
+                response.sendRedirect("login");
                 return;
             }
 
             Account account = (Account) session.getAttribute("account");
             String[] serviceIds = request.getParameter("selectedServices").split(",");
-            // Tong thoi gian
             int totalDuration = totalDuration(serviceIds);
             LocalDate date = LocalDate.parse(request.getParameter("appointmentDate"));
             LocalTime time = LocalTime.parse(request.getParameter("selectedTime"));
@@ -120,21 +117,22 @@ public class BookingServlet extends HttpServlet {
             appointment.setStatus("Scheduled");
             appointment.setNote(note);
             appointment.setCustomer(account.getPersonInfo());
+
             if (appointmentDAO.addAppointment(appointment)) {
                 for (String id : serviceIds) {
                     int serviceID = Integer.parseInt(id);
-                    // Xử lý từng serviceId, ví dụ thêm vào danh sách đặt chỗ
                     Service service = serviceDAO.selectService(serviceID);
                     int staffId = Integer.parseInt(request.getParameter("staff"));
                     AppointmentServiceDAO serviceList = new AppointmentServiceDAO();
                     serviceList.addAppointmentService(appointmentDAO.getMaxAppointmentID(), service.getId(), staffId);
                 }
             }
+
             request.setAttribute("success", "Booking successfully!");
             doGet(request, response);
         } catch (SQLException ex) {
             Logger.getLogger(BookingServlet.class.getName()).log(Level.SEVERE, null, ex);
-            response.sendRedirect("error"); // Redirect to a custom error page if session is invalid
+            response.sendRedirect("error");
         }
     }
 
@@ -145,8 +143,8 @@ public class BookingServlet extends HttpServlet {
      */
     @Override
     public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
+        return "Booking Servlet for handling appointments";
+    }
 
     private int totalDuration(String[] serviceIds) throws SQLException {
         ServiceDAO serviceDAO = new ServiceDAO();
@@ -154,7 +152,7 @@ public class BookingServlet extends HttpServlet {
         for (String serviceIdStr : serviceIds) {
             int serviceID = Integer.parseInt(serviceIdStr);
             Service service = serviceDAO.selectService(serviceID);
-            totalDuration += service.getDuration(); // Cộng dồn thời gian của mỗi dịch vụ
+            totalDuration += service.getDuration();
         }
         return totalDuration;
     }
