@@ -129,4 +129,36 @@ public class FeedbackDAO extends DBContext {
         return count;
     }
 
+    public void deleteFeedbackByID(String id) {
+        try {
+            String sql = "DELETE FROM Feedback WHERE ID=?";
+            PreparedStatement statement = DBContext.getConnection().prepareStatement(sql);
+            statement.setString(1, id);
+            statement.executeUpdate();
+            statement.close();
+        } catch (SQLException e) {
+            System.out.println(e);
+        }
+    }
+
+    public void updateFeedbackByID(Feedback feedback) {
+        try {
+            String sql = "UPDATE [dbo].[Feedback]\n"
+                    + "SET \n"
+                    + "    [Content] = ?,\n"
+                    + "    [CustomerID] = ?,\n"
+                    + "    [ServicesID] = ?\n"
+                    + "WHERE \n"
+                    + "    [ID] = ?;";
+            PreparedStatement statement = DBContext.getConnection().prepareStatement(sql);
+
+            statement.setString(1, feedback.getContent());
+            statement.setInt(2, feedback.getCustomer().getId());
+            statement.setInt(3, feedback.getService().getId());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println(e);
+        }
+    }
+
 }
