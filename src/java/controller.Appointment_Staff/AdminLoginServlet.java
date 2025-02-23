@@ -16,7 +16,7 @@ import model.Account;
 
 /**
  *
- * @author dell201-22379
+ * @author 
  */
 public class AdminLoginServlet extends HttpServlet {
 
