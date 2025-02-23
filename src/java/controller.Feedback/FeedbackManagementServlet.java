@@ -59,4 +59,33 @@ public class FeedbackManagementServlet extends HttpServlet {
 
         }
     }
+
+    class FeedbackService {
+
+        private final FeedbackDAO feedbackDAO = new FeedbackDAO();
+        private final ServiceDAO serviceDAO = new ServiceDAO();
+    
+        public List<Feedback> getAllFeedback() {
+            return feedbackDAO.getAllFeedback();
+        }
+    
+        public List<Service> getAllServices() {
+            try {
+                return serviceDAO.selectAllServices();
+            } catch (SQLException ex) {
+                Logger.getLogger(FeedbackService.class.getName()).log(Level.SEVERE, null, ex);
+                return null;
+            }
+        }
+    
+        public boolean updateFeedbackResponse(String feedbackId, String responseFeedback) {
+            try {
+                feedbackDAO.updateResponseFeedbackByID(feedbackId, responseFeedback);
+                return true;
+            } catch (Exception e) {
+                Logger.getLogger(FeedbackService.class.getName()).log(Level.SEVERE, null, e);
+                return false;
+            }
+        }
+    }
 }
