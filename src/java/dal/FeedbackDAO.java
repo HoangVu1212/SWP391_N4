@@ -160,5 +160,47 @@ public class FeedbackDAO extends DBContext {
             System.out.println(e);
         }
     }
+    public void updateResponseFeedbackByID(String feedbackId, String responseFeedback) {
+        try {
+            String sql = "UPDATE [dbo].[Feedback]\n"
+                    + "SET \n"
+                    + "    [responseFeedback] = ?\n"
+                    + "WHERE \n"
+                    + "    [ID] = ?;";
+            PreparedStatement statement = DBContext.getConnection().prepareStatement(sql);
+
+            statement.setString(1,responseFeedback);
+            statement.setString(2, feedbackId);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println(e);
+        }
+    }
+
+    public boolean createFeedback(int customerId, String content, int serviceId) {
+        boolean isAdded = false;
+        try {
+            String sql = "INSERT INTO Feedback (CustomerID, Content, ServicesID) VALUES (?, ?, ?)";
+            PreparedStatement statement = DBContext.getConnection().prepareStatement(sql);
+            statement.setInt(1, customerId); // Customer ID from the logged-in user's Person object
+            statement.setString(2, content);
+            statement.setInt(3, serviceId);
+            int rowsInserted = statement.executeUpdate();
+            isAdded = rowsInserted > 0;
+        } catch (SQLException e) {
+            System.out.println(e);
+        }
+        return isAdded;
+    }
+
+    
+    public static void main(String args[]) {
+        FeedbackDAO feedbackDAO = new FeedbackDAO();
+//        ArrayList<Feedback> f = feedbackDAO.getAllFeedback();
+//        for (Feedback feedback : f) {
+//            System.out.println(feedback);
+//        }
+feedbackDAO.updateResponseFeedbackByID("2", "Okay");
+    }
 
 }
