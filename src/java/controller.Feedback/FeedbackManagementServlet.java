@@ -18,7 +18,7 @@ import model.Service;
 
 /**
  *
- * @author admin
+ * @author VoDaiVy
  */
 public class FeedbackManagementServlet extends HttpServlet {
 
