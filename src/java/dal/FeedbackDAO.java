@@ -157,7 +157,7 @@ public class FeedbackDAO extends DBContext {
             statement.setInt(3, feedback.getService().getId());
             statement.executeUpdate();
         } catch (SQLException e) {
-            System.out.println(e);
+          
         }
     }
 
