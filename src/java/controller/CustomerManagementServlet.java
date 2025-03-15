@@ -17,7 +17,7 @@ import model.Person;
 
 /**
  *
- * @author admin
+ * @author VoDaiVy
  */
 @WebServlet(name = "CustomerController", urlPatterns = {"/customer-management"})
 public class CustomerManagementServlet extends HttpServlet {
@@ -67,6 +67,28 @@ public class CustomerManagementServlet extends HttpServlet {
         }
 
         // Chuyển đổi dateOfBirth từ chuỗi sang java.sql.Date
+        java.sql.Date dateOfBirth;
+        try {
+            dateOfBirth = java.sql.Date.valueOf(dateOfBirthStr);
+        } catch (IllegalArgumentException e) {
+            request.setAttribute("errorMessage", "Ngày sinh không hợp lệ. Vui lòng nhập lại.");
+            request.getRequestDispatcher("customer-management.jsp").forward(request, response);
+            return;
+        }
+
+        // Kiểm tra ID là số nguyên hợp lệ
+        int id;
+        try {
+            id = Integer.parseInt(idStr);
+        } catch (NumberFormatException e) {
+            request.setAttribute("errorMessage", "ID không hợp lệ.");
+            request.getRequestDispatcher("customer-management.jsp").forward(request, response);
+            return;
+        }
+
+        // Lấy giới tính
+        char gender = genderStr.charAt(0);
 
 
 }
+
