@@ -89,6 +89,41 @@ public class CustomerManagementServlet extends HttpServlet {
         // Lấy giới tính
         char gender = genderStr.charAt(0);
 
+        // Tạo đối tượng Person và thiết lập thông tin
+        Person person = new Person();
+        person.setId(id);
+        person.setName(name);
+        person.setDateOfBirth(dateOfBirth); // Gán dateOfBirth đã chuyển đổi
+        person.setGender(gender);
+        person.setPhone(phone);
+        person.setEmail(email);
+        person.setAddress(address);
+
+        // Cập nhật nhân viên
+        PersonDAO personDAO = new PersonDAO();
+        try {
+            personDAO.updatePerson(person);
+        } catch (SQLException ex) {
+            Logger.getLogger(CustomerManagementServlet.class.getName()).log(Level.SEVERE, null, ex);
+            request.setAttribute("errorMessage", "Có lỗi xảy ra trong quá trình cập nhật. Vui lòng thử lại.");
+            request.getRequestDispatcher("customer-management.jsp").forward(request, response);
+            return;
+        }
+
+        // Chuyển hướng đến trang danh sách nhân viên sau khi cập nhật
+        response.sendRedirect("customer-management");
+    }
+
+    /**
+     * Returns a short description of the servlet.
+     *
+     * @return a String containing servlet description
+     */
+    @Override
+    public String getServletInfo() {
+        return "Short description";
+    }// </editor-fold>
 
 }
+
 
