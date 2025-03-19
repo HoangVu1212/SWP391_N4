@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import controller.Feedback.FeedbackServlet;
 import model.Feedback;
 import model.Service;
 
@@ -43,5 +45,21 @@ public class FeedbackManagementServlet extends HttpServlet {
         println(feedbackList.get(0).toString());
         request.setAttribute("feedback", feedback);
         request.getRequestDispatcher("/Frontend_Staff/feedback.jsp").forward(request, response);
+    }
+    
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String feedbackId = request.getParameter("feedbackId");
+        String responseFeedback = request.getParameter("responseFeedback");
+
+        try {
+            FeedbackDAO feedbackDAO = new FeedbackDAO();
+            feedbackDAO.updateResponseFeedbackByID(feedbackId,responseFeedback);
+            response.sendRedirect("feedback-management");
+        } catch (NumberFormatException e) {
+
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid feedback ID format.");
+
+        }
     }
 }
