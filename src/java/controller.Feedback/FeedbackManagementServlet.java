@@ -1,4 +1,4 @@
-package java.controller.Feedback;
+package controller.Feedback;
 
 import dal.FeedbackDAO;
 import dal.ServiceDAO;
@@ -18,7 +18,7 @@ import model.Service;
 
 /**
  *
- * @author 
+ * @author VoDaiVy
  */
 public class FeedbackManagementServlet extends HttpServlet {
 
@@ -39,53 +39,9 @@ public class FeedbackManagementServlet extends HttpServlet {
         }
         request.setAttribute("service", service);
         request.setAttribute("feedbackList", feedbackList);
-        System.out.println(feedbackList.get(0).toString());
+        System.out.
+        println(feedbackList.get(0).toString());
         request.setAttribute("feedback", feedback);
         request.getRequestDispatcher("/Frontend_Staff/feedback.jsp").forward(request, response);
-    }
-
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String feedbackId = request.getParameter("feedbackId");
-        String responseFeedback = request.getParameter("responseFeedback");
-
-        try {
-            FeedbackDAO feedbackDAO = new FeedbackDAO();
-            feedbackDAO.updateResponseFeedbackByID(feedbackId,responseFeedback);
-            response.sendRedirect("feedback-management");
-        } catch (NumberFormatException e) {
-
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid feedback ID format.");
-
-        }
-    }
-
-    class FeedbackService {
-
-        private final FeedbackDAO feedbackDAO = new FeedbackDAO();
-        private final ServiceDAO serviceDAO = new ServiceDAO();
-    
-        public List<Feedback> getAllFeedback() {
-            return feedbackDAO.getAllFeedback();
-        }
-    
-        public List<Service> getAllServices() {
-            try {
-                return serviceDAO.selectAllServices();
-            } catch (SQLException ex) {
-                Logger.getLogger(FeedbackService.class.getName()).log(Level.SEVERE, null, ex);
-                return null;
-            }
-        }
-    
-        public boolean updateFeedbackResponse(String feedbackId, String responseFeedback) {
-            try {
-                feedbackDAO.updateResponseFeedbackByID(feedbackId, responseFeedback);
-                return true;
-            } catch (Exception e) {
-                Logger.getLogger(FeedbackService.class.getName()).log(Level.SEVERE, null, e);
-                return false;
-            }
-        }
     }
 }

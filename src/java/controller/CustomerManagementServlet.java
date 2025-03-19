@@ -85,7 +85,10 @@ public class CustomerManagementServlet extends HttpServlet {
             request.getRequestDispatcher("customer-management.jsp").forward(request, response);
             return;
         }
+<<<<<<< HEAD
 
+=======
+>>>>>>> main
         // Lấy giới tính
         char gender = genderStr.charAt(0);
 
@@ -98,6 +101,7 @@ public class CustomerManagementServlet extends HttpServlet {
         person.setPhone(phone);
         person.setEmail(email);
         person.setAddress(address);
+<<<<<<< HEAD
 
         // Cập nhật nhân viên
         PersonDAO personDAO = new PersonDAO();
@@ -127,3 +131,8 @@ public class CustomerManagementServlet extends HttpServlet {
 }
 
 
+=======
+
+}
+}
+>>>>>>> main
