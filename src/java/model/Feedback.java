@@ -6,7 +6,7 @@ package model;
 
 /**
  *
- * @author admin
+ * @author VyVo
  */
 public class Feedback {
     private int id;
