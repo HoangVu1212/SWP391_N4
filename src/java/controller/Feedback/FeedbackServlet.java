@@ -25,7 +25,7 @@ import model.Service;
 
 /**
  *
- * @author admin
+ * @author VyVo
  */
 public class FeedbackServlet extends HttpServlet {
 
